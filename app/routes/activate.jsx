@@ -1,18 +1,6 @@
 import { useState } from "react";
 import { json } from "@remix-run/node";
 import { useActionData } from "@remix-run/react";
-import {
-  Page,
-  Card,
-  FormLayout,
-  TextField,
-  Button,
-  Banner,
-  Text,
-  BlockStack,
-  InlineStack,
-  Divider
-} from "@shopify/polaris";
 import prisma from "../db.server";
 
 export async function action({ request }) {
@@ -163,74 +151,152 @@ export default function ActivatePage() {
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      padding: "20px"
+      padding: "20px",
+      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
     }}>
       <div style={{ maxWidth: "500px", width: "100%" }}>
-        <Card>
-          <BlockStack gap="500">
-            <div style={{ textAlign: "center" }}>
-              <Text variant="headingLg" as="h1">
-                🔐 Theme License Activation
-              </Text>
-              <Text variant="bodyMd" color="subdued">
-                Activate your premium theme license to unlock all features
-              </Text>
+        <div style={{
+          background: "white",
+          borderRadius: "12px",
+          padding: "40px",
+          boxShadow: "0 20px 40px rgba(0, 0, 0, 0.1)"
+        }}>
+          <div style={{ textAlign: "center", marginBottom: "30px" }}>
+            <h1 style={{ 
+              fontSize: "28px", 
+              fontWeight: "600", 
+              color: "#333", 
+              margin: "0 0 10px 0" 
+            }}>
+              🔐 Theme License Activation
+            </h1>
+            <p style={{ 
+              fontSize: "16px", 
+              color: "#666", 
+              margin: "0" 
+            }}>
+              Activate your premium theme license to unlock all features
+            </p>
+          </div>
+
+          {actionData && (
+            <div style={{
+              padding: "16px",
+              borderRadius: "8px",
+              marginBottom: "20px",
+              backgroundColor: actionData.success ? "#d4edda" : "#f8d7da",
+              border: `1px solid ${actionData.success ? "#c3e6cb" : "#f5c6cb"}`,
+              color: actionData.success ? "#155724" : "#721c24"
+            }}>
+              {actionData.success ? actionData.message : actionData.error}
             </div>
+          )}
 
-            {actionData && (
-              <Banner
-                status={actionData.success ? "success" : "critical"}
-                onDismiss={() => {}}
-              >
-                {actionData.success 
-                  ? actionData.message 
-                  : actionData.error}
-              </Banner>
-            )}
-
-            <FormLayout>
-              <TextField
-                label="License Key"
+          <form onSubmit={(e) => { e.preventDefault(); handleActivation(); }}>
+            <div style={{ marginBottom: "20px" }}>
+              <label style={{ 
+                display: "block", 
+                fontSize: "14px", 
+                fontWeight: "500", 
+                color: "#333", 
+                marginBottom: "8px" 
+              }}>
+                License Key
+              </label>
+              <input
+                type="text"
                 value={licenseKey}
-                onChange={setLicenseKey}
+                onChange={(e) => setLicenseKey(e.target.value)}
                 placeholder="TL-XXXXXXXX-XXXXXXXX"
-                autoComplete="off"
-                helpText="Enter the license key provided with your theme"
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  border: "1px solid #ddd",
+                  borderRadius: "6px",
+                  fontSize: "16px",
+                  boxSizing: "border-box"
+                }}
+                required
               />
-              
-              <TextField
-                label="Your Shop Domain"
-                value={domain}
-                onChange={setDomain}
-                placeholder="your-shop.myshopify.com"
-                helpText="Enter your complete Shopify domain (including .myshopify.com)"
-              />
-              
-              <InlineStack align="center">
-                <Button
-                  variant="primary"
-                  size="large"
-                  onClick={handleActivation}
-                  loading={isActivating}
-                  disabled={!licenseKey || !domain}
-                >
-                  Activate License
-                </Button>
-              </InlineStack>
-            </FormLayout>
-
-            <Divider />
-
-            <div style={{ textAlign: "center" }}>
-              <Text variant="bodySm" color="subdued">
-                Need help? Contact support at{" "}
-                <a href="mailto:support@yourthemestore.com">
-                  support@yourthemestore.com
-                </a>
-              </Text>
+              <p style={{ 
+                fontSize: "12px", 
+                color: "#666", 
+                margin: "4px 0 0 0" 
+              }}>
+                Enter the license key provided with your theme
+              </p>
             </div>
-          </BlockStack>
-        </Card>
+            
+            <div style={{ marginBottom: "30px" }}>
+              <label style={{ 
+                display: "block", 
+                fontSize: "14px", 
+                fontWeight: "500", 
+                color: "#333", 
+                marginBottom: "8px" 
+              }}>
+                Your Shop Domain
+              </label>
+              <input
+                type="text"
+                value={domain}
+                onChange={(e) => setDomain(e.target.value)}
+                placeholder="your-shop.myshopify.com"
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  border: "1px solid #ddd",
+                  borderRadius: "6px",
+                  fontSize: "16px",
+                  boxSizing: "border-box"
+                }}
+                required
+              />
+              <p style={{ 
+                fontSize: "12px", 
+                color: "#666", 
+                margin: "4px 0 0 0" 
+              }}>
+                Enter your complete Shopify domain (including .myshopify.com)
+              </p>
+            </div>
+            
+            <div style={{ textAlign: "center", marginBottom: "30px" }}>
+              <button
+                type="submit"
+                disabled={!licenseKey || !domain || isActivating}
+                style={{
+                  background: "#007bff",
+                  color: "white",
+                  border: "none",
+                  padding: "14px 28px",
+                  borderRadius: "6px",
+                  fontSize: "16px",
+                  fontWeight: "500",
+                  cursor: "pointer",
+                  opacity: (!licenseKey || !domain || isActivating) ? 0.6 : 1
+                }}
+              >
+                {isActivating ? "Activating..." : "Activate License"}
+              </button>
+            </div>
+          </form>
+
+          <hr style={{ border: "none", borderTop: "1px solid #eee", margin: "30px 0" }} />
+
+          <div style={{ textAlign: "center" }}>
+            <p style={{ 
+              fontSize: "14px", 
+              color: "#666", 
+              margin: "0" 
+            }}>
+              Need help? Contact support at{" "}
+              <a href="mailto:support@yourthemestore.com" style={{ color: "#007bff" }}>
+                support@yourthemestore.com
+              </a>
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
