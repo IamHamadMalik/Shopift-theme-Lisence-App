@@ -1,12 +1,8 @@
 import { useState } from "react";
-import { json } from "@remix-run/node";
-import { useActionData } from "@remix-run/react";
-import prisma from "../db.server";
 
 // This route only handles the UI - API logic moved to /api/activate
 
 export default function ActivatePage() {
-  const actionData = useActionData();
   const [licenseKey, setLicenseKey] = useState("");
   const [domain, setDomain] = useState("");
   const [isActivating, setIsActivating] = useState(false);
@@ -88,18 +84,6 @@ export default function ActivatePage() {
             </p>
           </div>
 
-          {actionData && (
-            <div style={{
-              padding: "16px",
-              borderRadius: "8px",
-              marginBottom: "20px",
-              backgroundColor: actionData.success ? "#d4edda" : "#f8d7da",
-              border: `1px solid ${actionData.success ? "#c3e6cb" : "#f5c6cb"}`,
-              color: actionData.success ? "#155724" : "#721c24"
-            }}>
-              {actionData.success ? actionData.message : actionData.error}
-            </div>
-          )}
 
           <form onSubmit={(e) => { e.preventDefault(); handleActivation(); }} method="post">
             <div style={{ marginBottom: "20px" }}>
