@@ -7,26 +7,37 @@
 {% assign license_activated = false %}
 {% assign license_error = '' %}
 
-{% comment %} Check for license activation in metafields {% endcomment %}
-{% if shop.metafields.theme_license.activation_status %}
-  {% assign license_data = shop.metafields.theme_license.activation_status %}
-  {% if license_data.activated == true %}
-    {% assign license_activated = true %}
-  {% endif %}
-{% endif %}
+{% comment %} Check license status via API call {% endcomment %}
+<script>
+  // Check license activation status
+  async function checkLicenseStatus() {
+    try {
+      const response = await fetch('https://shopift-theme-lisence-app.vercel.app/api/license/check?license=check&domain={{ shop.permanent_domain }}');
+      const data = await response.json();
+      
+      if (data.success && data.activated) {
+        // License is activated, hide the overlay
+        const overlay = document.getElementById('theme-license-notice');
+        if (overlay) {
+          overlay.style.display = 'none';
+        }
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('License check failed:', error);
+      return false;
+    }
+  }
 
-{% comment %} Also check theme-specific metafields if available {% endcomment %}
-{% unless license_activated %}
-  {% for theme in shop.themes %}
-    {% if theme.id == theme.id and theme.metafields.theme_license.activation_status %}
-      {% assign theme_license_data = theme.metafields.theme_license.activation_status %}
-      {% if theme_license_data.activated == true %}
-        {% assign license_activated = true %}
-        {% break %}
-      {% endif %}
-    {% endif %}
-  {% endfor %}
-{% endunless %}
+  // Check license status when page loads
+  document.addEventListener('DOMContentLoaded', function() {
+    checkLicenseStatus();
+  });
+</script>
+
+{% comment %} Default to showing overlay, will be hidden by JavaScript if license is valid {% endcomment %}
+{% assign license_activated = false %}
 
 {% comment %} Show license activation notice if not activated {% endcomment %}
 {% unless license_activated %}
@@ -160,15 +171,13 @@
   
   // Check license status periodically
   setInterval(function() {
-    fetch('/api/license/validate?license=check&domain={{ shop.permanent_domain }}')
-      .then(response => response.json())
-      .then(data => {
-        if (data.success && data.activated) {
-          location.reload();
-        }
-      })
-      .catch(console.error);
-  }, 30000); // Check every 30 seconds
+    checkLicenseStatus().then(activated => {
+      if (activated) {
+        // License is now activated, can optionally reload or just hide overlay
+        console.log('License activated successfully!');
+      }
+    });
+  }, 10000); // Check every 10 seconds
 </script>
 {% endunless %}
 
