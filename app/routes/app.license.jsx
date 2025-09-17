@@ -149,6 +149,43 @@ export default function LicensePage() {
     }
   };
 
+  const handleReactivateLicense = async (licenseKey) => {
+    const domain = prompt(`Enter the domain to reactivate license ${licenseKey}:`);
+    
+    if (!domain) {
+      return; // User cancelled
+    }
+
+    if (!domain.endsWith('.myshopify.com')) {
+      alert('Domain must be a valid .myshopify.com domain');
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append("licenseKey", licenseKey);
+      formData.append("domain", domain);
+
+      const response = await fetch("/api/license/reactivate", {
+        method: "POST",
+        body: formData
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        alert("License reactivated successfully!");
+        // Refresh the page to show updated data
+        window.location.reload();
+      } else {
+        alert(`Error: ${result.error}`);
+      }
+    } catch (error) {
+      console.error("Error reactivating license:", error);
+      alert("An error occurred while reactivating the license.");
+    }
+  };
+
   // Prepare data for tables
   const licenseRows = licenses.map(license => [
     license.licenseKey,
@@ -156,16 +193,27 @@ export default function LicensePage() {
     license.isActive ? <Badge status="success">Active</Badge> : <Badge>Inactive</Badge>,
     new Date(license.createdAt).toLocaleDateString(),
     license.activatedAt ? new Date(license.activatedAt).toLocaleDateString() : "—",
-    license.isActive && license.domain ? (
-      <Button
-        size="small"
-        variant="primary"
-        tone="critical"
-        onClick={() => handleRevokeLicense(license.licenseKey, license.domain)}
-      >
-        Revoke
-      </Button>
-    ) : "—"
+    <InlineStack gap="200">
+      {license.isActive && license.domain ? (
+        <Button
+          size="small"
+          variant="primary"
+          tone="critical"
+          onClick={() => handleRevokeLicense(license.licenseKey, license.domain)}
+        >
+          Revoke
+        </Button>
+      ) : (
+        <Button
+          size="small"
+          variant="primary"
+          tone="success"
+          onClick={() => handleReactivateLicense(license.licenseKey)}
+        >
+          Reactivate
+        </Button>
+      )}
+    </InlineStack>
   ]);
 
   const activationRows = activations.map(activation => [
@@ -174,16 +222,27 @@ export default function LicensePage() {
     activation.themeId || "—",
     new Date(activation.activatedAt).toLocaleDateString(),
     activation.isActive ? <Badge status="success">Active</Badge> : <Badge status="critical">Inactive</Badge>,
-    activation.isActive ? (
-      <Button
-        size="small"
-        variant="primary"
-        tone="critical"
-        onClick={() => handleRevokeLicense(activation.licenseKey, activation.domain)}
-      >
-        Revoke
-      </Button>
-    ) : "—"
+    <InlineStack gap="200">
+      {activation.isActive ? (
+        <Button
+          size="small"
+          variant="primary"
+          tone="critical"
+          onClick={() => handleRevokeLicense(activation.licenseKey, activation.domain)}
+        >
+          Revoke
+        </Button>
+      ) : (
+        <Button
+          size="small"
+          variant="primary"
+          tone="success"
+          onClick={() => handleReactivateLicense(activation.licenseKey)}
+        >
+          Reactivate
+        </Button>
+      )}
+    </InlineStack>
   ]);
 
   return (
@@ -234,6 +293,8 @@ export default function LicensePage() {
               <InlineStack align="start">
                 <Button
                   variant="primary"
+                  size="large"
+                  tone="success"
                   onClick={handleActivation}
                   loading={isActivating}
                 >
@@ -262,7 +323,12 @@ export default function LicensePage() {
               />
               
               <InlineStack align="start">
-                <Button onClick={handleGenerateLicenses}>
+                <Button 
+                  variant="primary"
+                  size="large"
+                  tone="magic"
+                  onClick={handleGenerateLicenses}
+                >
                   Generate Licenses
                 </Button>
               </InlineStack>
