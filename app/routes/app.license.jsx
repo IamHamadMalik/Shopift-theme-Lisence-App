@@ -119,13 +119,53 @@ export default function LicensePage() {
     }
   };
 
+  const handleRevokeLicense = async (licenseKey, domain) => {
+    if (!confirm(`Are you sure you want to revoke license ${licenseKey} for domain ${domain}?`)) {
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append("licenseKey", licenseKey);
+      formData.append("domain", domain);
+
+      const response = await fetch("/api/license/revoke", {
+        method: "POST",
+        body: formData
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        alert("License revoked successfully!");
+        // Refresh the page to show updated data
+        window.location.reload();
+      } else {
+        alert(`Error: ${result.error}`);
+      }
+    } catch (error) {
+      console.error("Error revoking license:", error);
+      alert("An error occurred while revoking the license.");
+    }
+  };
+
   // Prepare data for tables
   const licenseRows = licenses.map(license => [
     license.licenseKey,
     license.domain || "Not activated",
     license.isActive ? <Badge status="success">Active</Badge> : <Badge>Inactive</Badge>,
     new Date(license.createdAt).toLocaleDateString(),
-    license.activatedAt ? new Date(license.activatedAt).toLocaleDateString() : "—"
+    license.activatedAt ? new Date(license.activatedAt).toLocaleDateString() : "—",
+    license.isActive && license.domain ? (
+      <Button
+        size="small"
+        variant="primary"
+        tone="critical"
+        onClick={() => handleRevokeLicense(license.licenseKey, license.domain)}
+      >
+        Revoke
+      </Button>
+    ) : "—"
   ]);
 
   const activationRows = activations.map(activation => [
@@ -133,7 +173,17 @@ export default function LicensePage() {
     activation.domain,
     activation.themeId || "—",
     new Date(activation.activatedAt).toLocaleDateString(),
-    activation.isActive ? <Badge status="success">Active</Badge> : <Badge status="critical">Inactive</Badge>
+    activation.isActive ? <Badge status="success">Active</Badge> : <Badge status="critical">Inactive</Badge>,
+    activation.isActive ? (
+      <Button
+        size="small"
+        variant="primary"
+        tone="critical"
+        onClick={() => handleRevokeLicense(activation.licenseKey, activation.domain)}
+      >
+        Revoke
+      </Button>
+    ) : "—"
   ]);
 
   return (
@@ -228,8 +278,8 @@ export default function LicensePage() {
             <Text variant="headingMd">All Licenses ({licenses.length})</Text>
             
             <DataTable
-              columnContentTypes={['text', 'text', 'text', 'text', 'text']}
-              headings={['License Key', 'Domain', 'Status', 'Created', 'Activated']}
+              columnContentTypes={['text', 'text', 'text', 'text', 'text', 'text']}
+              headings={['License Key', 'Domain', 'Status', 'Created', 'Activated', 'Actions']}
               rows={licenseRows}
             />
           </BlockStack>
@@ -241,8 +291,8 @@ export default function LicensePage() {
             <Text variant="headingMd">Active Activations ({activations.length})</Text>
             
             <DataTable
-              columnContentTypes={['text', 'text', 'text', 'text', 'text']}
-              headings={['License Key', 'Domain', 'Theme ID', 'Activated', 'Status']}
+              columnContentTypes={['text', 'text', 'text', 'text', 'text', 'text']}
+              headings={['License Key', 'Domain', 'Theme ID', 'Activated', 'Status', 'Actions']}
               rows={activationRows}
             />
           </BlockStack>
