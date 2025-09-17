@@ -128,17 +128,29 @@ export default function ActivatePage() {
 
       const response = await fetch("/activate", {
         method: "POST",
-        body: formData
+        body: formData,
+        headers: {
+          "Accept": "application/json"
+        }
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
       const result = await response.json();
       
       if (result.success) {
         setLicenseKey("");
         setDomain("");
+        // Show success message
+        alert("License activated successfully! You can now refresh your theme.");
+      } else {
+        alert(`Error: ${result.error}`);
       }
     } catch (error) {
       console.error("Error:", error);
+      alert("An error occurred. Please try again.");
     } finally {
       setIsActivating(false);
     }
@@ -192,7 +204,7 @@ export default function ActivatePage() {
             </div>
           )}
 
-          <form onSubmit={(e) => { e.preventDefault(); handleActivation(); }}>
+          <form onSubmit={(e) => { e.preventDefault(); handleActivation(); }} method="post">
             <div style={{ marginBottom: "20px" }}>
               <label style={{ 
                 display: "block", 
