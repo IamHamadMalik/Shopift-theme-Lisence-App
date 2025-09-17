@@ -149,16 +149,21 @@ export default function LicensePage() {
     }
   };
 
-  const handleReactivateLicense = async (licenseKey) => {
-    const domain = prompt(`Enter the domain to reactivate license ${licenseKey}:`);
+  const handleReactivateLicense = async (licenseKey, existingDomain) => {
+    let domain = existingDomain;
     
-    if (!domain) {
-      return; // User cancelled
-    }
+    // If no existing domain, prompt for one
+    if (!domain || domain === "Not activated") {
+      domain = prompt(`Enter the domain to reactivate license ${licenseKey}:`);
+      
+      if (!domain) {
+        return; // User cancelled
+      }
 
-    if (!domain.endsWith('.myshopify.com')) {
-      alert('Domain must be a valid .myshopify.com domain');
-      return;
+      if (!domain.endsWith('.myshopify.com')) {
+        alert('Domain must be a valid .myshopify.com domain');
+        return;
+      }
     }
 
     try {
@@ -186,6 +191,40 @@ export default function LicensePage() {
     }
   };
 
+  const handleDeleteLicense = async (licenseKey) => {
+    if (!confirm(`Are you sure you want to PERMANENTLY DELETE license ${licenseKey}? This action cannot be undone!`)) {
+      return;
+    }
+
+    // Double confirmation for permanent deletion
+    if (!confirm(`This will permanently delete the license and all its activation records. Are you absolutely sure?`)) {
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append("licenseKey", licenseKey);
+
+      const response = await fetch("/api/license/delete", {
+        method: "POST",
+        body: formData
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        alert("License deleted permanently!");
+        // Refresh the page to show updated data
+        window.location.reload();
+      } else {
+        alert(`Error: ${result.error}`);
+      }
+    } catch (error) {
+      console.error("Error deleting license:", error);
+      alert("An error occurred while deleting the license.");
+    }
+  };
+
   // Prepare data for tables
   const licenseRows = licenses.map(license => [
     license.licenseKey,
@@ -195,23 +234,43 @@ export default function LicensePage() {
     license.activatedAt ? new Date(license.activatedAt).toLocaleDateString() : "—",
     <InlineStack gap="200">
       {license.isActive && license.domain ? (
-        <Button
-          size="small"
-          variant="primary"
-          tone="critical"
-          onClick={() => handleRevokeLicense(license.licenseKey, license.domain)}
-        >
-          Revoke
-        </Button>
+        <>
+          <Button
+            size="small"
+            variant="primary"
+            tone="critical"
+            onClick={() => handleRevokeLicense(license.licenseKey, license.domain)}
+          >
+            🚫 Revoke
+          </Button>
+          <Button
+            size="small"
+            variant="plain"
+            tone="critical"
+            onClick={() => handleDeleteLicense(license.licenseKey)}
+          >
+            🗑️ Delete
+          </Button>
+        </>
       ) : (
-        <Button
-          size="small"
-          variant="primary"
-          tone="success"
-          onClick={() => handleReactivateLicense(license.licenseKey)}
-        >
-          Reactivate
-        </Button>
+        <>
+          <Button
+            size="small"
+            variant="primary"
+            tone="success"
+            onClick={() => handleReactivateLicense(license.licenseKey, license.domain)}
+          >
+            ✅ Reactivate
+          </Button>
+          <Button
+            size="small"
+            variant="plain"
+            tone="critical"
+            onClick={() => handleDeleteLicense(license.licenseKey)}
+          >
+            🗑️ Delete
+          </Button>
+        </>
       )}
     </InlineStack>
   ]);
@@ -224,23 +283,43 @@ export default function LicensePage() {
     activation.isActive ? <Badge status="success">Active</Badge> : <Badge status="critical">Inactive</Badge>,
     <InlineStack gap="200">
       {activation.isActive ? (
-        <Button
-          size="small"
-          variant="primary"
-          tone="critical"
-          onClick={() => handleRevokeLicense(activation.licenseKey, activation.domain)}
-        >
-          Revoke
-        </Button>
+        <>
+          <Button
+            size="small"
+            variant="primary"
+            tone="critical"
+            onClick={() => handleRevokeLicense(activation.licenseKey, activation.domain)}
+          >
+            🚫 Revoke
+          </Button>
+          <Button
+            size="small"
+            variant="plain"
+            tone="critical"
+            onClick={() => handleDeleteLicense(activation.licenseKey)}
+          >
+            🗑️ Delete
+          </Button>
+        </>
       ) : (
-        <Button
-          size="small"
-          variant="primary"
-          tone="success"
-          onClick={() => handleReactivateLicense(activation.licenseKey)}
-        >
-          Reactivate
-        </Button>
+        <>
+          <Button
+            size="small"
+            variant="primary"
+            tone="success"
+            onClick={() => handleReactivateLicense(activation.licenseKey, activation.domain)}
+          >
+            ✅ Reactivate
+          </Button>
+          <Button
+            size="small"
+            variant="plain"
+            tone="critical"
+            onClick={() => handleDeleteLicense(activation.licenseKey)}
+          >
+            🗑️ Delete
+          </Button>
+        </>
       )}
     </InlineStack>
   ]);

@@ -11,50 +11,41 @@ export async function action({ request }) {
     await authenticate.admin(request);
     const formData = await request.formData();
     const licenseKey = formData.get("licenseKey");
-    const domain = formData.get("domain");
 
-    if (!licenseKey || !domain) {
+    if (!licenseKey) {
       return json(
         { 
           success: false, 
-          error: "License key and domain are required" 
+          error: "License key is required" 
         },
         { status: 400 }
       );
     }
 
-    // Delete the license activation
+    // Delete all activation records for this license
     await prisma.licenseActivation.deleteMany({
       where: {
-        licenseKey,
-        domain
+        licenseKey
       }
     });
 
-    // Update the main license record to inactive but keep domain
-    await prisma.license.updateMany({
+    // Delete the main license record
+    await prisma.license.delete({
       where: {
-        licenseKey,
-        domain
-      },
-      data: {
-        isActive: false,
-        activatedAt: null
-        // Keep domain for easy reactivation
+        licenseKey
       }
     });
 
     return json({
       success: true,
-      message: "License revoked successfully",
-      revokedLicense: {
-        licenseKey,
-        domain
+      message: "License deleted permanently",
+      deletedLicense: {
+        licenseKey
       }
     });
 
   } catch (error) {
-    console.error("License revocation error:", error);
+    console.error("License deletion error:", error);
     return json(
       { 
         success: false, 
