@@ -1,0 +1,182 @@
+{% comment %}
+  Theme License Protection System
+  Add this code to your theme's layout/theme.liquid file
+  Place it right after the opening <body> tag
+{% endcomment %}
+
+{% assign license_activated = false %}
+{% assign license_error = '' %}
+
+{% comment %} Check for license activation in metafields {% endcomment %}
+{% if shop.metafields.theme_license.activation_status %}
+  {% assign license_data = shop.metafields.theme_license.activation_status %}
+  {% if license_data.activated == true %}
+    {% assign license_activated = true %}
+  {% endif %}
+{% endif %}
+
+{% comment %} Also check theme-specific metafields if available {% endcomment %}
+{% unless license_activated %}
+  {% for theme in shop.themes %}
+    {% if theme.id == theme.id and theme.metafields.theme_license.activation_status %}
+      {% assign theme_license_data = theme.metafields.theme_license.activation_status %}
+      {% if theme_license_data.activated == true %}
+        {% assign license_activated = true %}
+        {% break %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+{% endunless %}
+
+{% comment %} Show license activation notice if not activated {% endcomment %}
+{% unless license_activated %}
+<div id="theme-license-notice" style="
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+">
+  <div style="
+    background: white;
+    padding: 40px;
+    border-radius: 12px;
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  ">
+    <div style="
+      width: 80px;
+      height: 80px;
+      background: #dc3545;
+      border-radius: 50%;
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 36px;
+    ">
+      🔒
+    </div>
+    
+    <h2 style="
+      margin: 0 0 16px 0;
+      color: #333;
+      font-size: 24px;
+      font-weight: 600;
+    ">
+      Theme License Not Activated
+    </h2>
+    
+    <p style="
+      margin: 0 0 24px 0;
+      color: #666;
+      font-size: 16px;
+      line-height: 1.5;
+    ">
+      This premium theme requires license activation to function properly. 
+      Please activate your license to unlock all features.
+    </p>
+    
+    <div style="
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      text-align: left;
+    ">
+      <h4 style="margin: 0 0 12px 0; color: #333; font-size: 16px;">
+        Activation Steps:
+      </h4>
+      <ol style="margin: 0; padding-left: 20px; color: #666; font-size: 14px;">
+        <li style="margin-bottom: 8px;">Visit the license activation page</li>
+        <li style="margin-bottom: 8px;">Enter your license key and shop domain</li>
+        <li style="margin-bottom: 8px;">Click "Activate License"</li>
+        <li>Refresh this page after activation</li>
+      </ol>
+    </div>
+    
+    <div style="
+      padding: 16px;
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: 6px;
+      margin: 20px 0;
+    ">
+      <strong style="color: #856404; font-size: 14px;">
+        Shop Domain: {{ shop.permanent_domain }}
+      </strong>
+    </div>
+    
+    <button onclick="window.location.reload()" style="
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-right: 12px;
+    ">
+      Refresh Page
+    </button>
+    
+    <a href="https://your-activation-site.com/activate" style="
+      display: inline-block;
+      background: #28a745;
+      color: white;
+      text-decoration: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 16px;
+    ">
+      Activate License
+    </a>
+  </div>
+</div>
+
+<script>
+  // Prevent right-click and common shortcuts when license is not activated
+  document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+  });
+  
+  document.addEventListener('keydown', function(e) {
+    // Disable F12, Ctrl+Shift+I, Ctrl+Shift+C, Ctrl+U
+    if (e.keyCode === 123 || 
+        (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 67)) ||
+        (e.ctrlKey && e.keyCode === 85)) {
+      e.preventDefault();
+    }
+  });
+  
+  // Check license status periodically
+  setInterval(function() {
+    fetch('/api/license/validate?license=check&domain={{ shop.permanent_domain }}')
+      .then(response => response.json())
+      .then(data => {
+        if (data.success && data.activated) {
+          location.reload();
+        }
+      })
+      .catch(console.error);
+  }, 30000); // Check every 30 seconds
+</script>
+{% endunless %}
+
+{% comment %} 
+  Additional security: Add this CSS to hide content when JS is disabled
+  Add to your theme's main CSS file:
+  
+  .no-js #theme-license-notice ~ * {
+    display: none !important;
+  }
+{% endcomment %}
