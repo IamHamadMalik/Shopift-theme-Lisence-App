@@ -104,57 +104,208 @@
       margin: 20px 0;
       text-align: left;
     ">
-      <h4 style="margin: 0 0 12px 0; color: #333; font-size: 16px;">
-        Activation Steps:
+      <h4 style="margin: 0 0 16px 0; color: #333; font-size: 16px;">
+        License Activation:
       </h4>
-      <ol style="margin: 0; padding-left: 20px; color: #666; font-size: 14px;">
-        <li style="margin-bottom: 8px;">Visit the license activation page</li>
-        <li style="margin-bottom: 8px;">Enter your license key and shop domain</li>
-        <li style="margin-bottom: 8px;">Click "Activate License"</li>
-        <li>Refresh this page after activation</li>
-      </ol>
+      
+      <!-- Error Message -->
+      <div id="error-message" style="
+        display: none;
+        background: #f8d7da;
+        color: #721c24;
+        padding: 12px;
+        border-radius: 6px;
+        margin-bottom: 16px;
+        border: 1px solid #f5c6cb;
+      "></div>
+      
+      <!-- Success Message -->
+      <div id="success-message" style="
+        display: none;
+        background: #d4edda;
+        color: #155724;
+        padding: 12px;
+        border-radius: 6px;
+        margin-bottom: 16px;
+        border: 1px solid #c3e6cb;
+      "></div>
+      
+      <!-- License Key Input -->
+      <div style="margin-bottom: 16px;">
+        <label style="
+          display: block;
+          font-size: 14px;
+          font-weight: 500;
+          color: #333;
+          margin-bottom: 6px;
+        ">License Key:</label>
+        <input 
+          type="text" 
+          id="license-key-input" 
+          placeholder="Enter your license key"
+          style="
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            box-sizing: border-box;
+          "
+        />
+      </div>
+      
+      <!-- Shop Domain Input (Pre-filled) -->
+      <div style="margin-bottom: 20px;">
+        <label style="
+          display: block;
+          font-size: 14px;
+          font-weight: 500;
+          color: #333;
+          margin-bottom: 6px;
+        ">Shop Domain:</label>
+        <input 
+          type="text" 
+          id="shop-domain-input" 
+          value="{{ shop.permanent_domain }}"
+          readonly
+          style="
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            box-sizing: border-box;
+            background-color: #f8f9fa;
+          "
+        />
+        <small style="color: #666; font-size: 12px;">Your shop domain is automatically detected</small>
+      </div>
+      
+      <!-- Activate Button -->
+      <button 
+        id="activate-btn"
+        onclick="activateLicense()" 
+        style="
+          background: #28a745;
+          color: white;
+          border: none;
+          padding: 12px 24px;
+          border-radius: 6px;
+          font-size: 16px;
+          cursor: pointer;
+          width: 100%;
+          font-weight: 500;
+        "
+      >
+        Activate License
+      </button>
     </div>
-    
-    <div style="
-      padding: 16px;
-      background: #fff3cd;
-      border: 1px solid #ffeaa7;
-      border-radius: 6px;
-      margin: 20px 0;
-    ">
-      <strong style="color: #856404; font-size: 14px;">
-        Shop Domain: {{ shop.permanent_domain }}
-      </strong>
-    </div>
-    
-    <button onclick="window.location.reload()" style="
-      background: #007bff;
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 6px;
-      font-size: 16px;
-      cursor: pointer;
-      margin-right: 12px;
-    ">
-      Refresh Page
-    </button>
-    
-    <a href="https://your-activation-site.com/activate" style="
-      display: inline-block;
-      background: #28a745;
-      color: white;
-      text-decoration: none;
-      padding: 12px 24px;
-      border-radius: 6px;
-      font-size: 16px;
-    ">
-      Activate License
-    </a>
   </div>
 </div>
 
 <script>
+  // License activation function
+  async function activateLicense() {
+    const licenseKey = document.getElementById('license-key-input').value.trim();
+    const domain = document.getElementById('shop-domain-input').value.trim();
+    const activateBtn = document.getElementById('activate-btn');
+    const errorMsg = document.getElementById('error-message');
+    const successMsg = document.getElementById('success-message');
+    
+    // Hide previous messages
+    errorMsg.style.display = 'none';
+    successMsg.style.display = 'none';
+    
+    // Validate inputs
+    if (!licenseKey) {
+      showError('Please enter your license key');
+      return;
+    }
+    
+    if (!domain) {
+      showError('Shop domain is required');
+      return;
+    }
+    
+    // Show loading state
+    activateBtn.disabled = true;
+    activateBtn.textContent = 'Activating...';
+    
+    try {
+      const formData = new FormData();
+      formData.append('licenseKey', licenseKey);
+      formData.append('domain', domain);
+      
+      const response = await fetch('https://shopift-theme-lisence-app.vercel.app/api/activate', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        showSuccess('License activated successfully! Theme is now unlocked.');
+        // Hide the overlay after 2 seconds
+        setTimeout(() => {
+          document.getElementById('theme-license-notice').style.display = 'none';
+        }, 2000);
+      } else {
+        showError(result.error || 'Activation failed. Please try again.');
+      }
+      
+    } catch (error) {
+      console.error('Activation error:', error);
+      showError('Network error. Please check your connection and try again.');
+    } finally {
+      // Reset button state
+      activateBtn.disabled = false;
+      activateBtn.textContent = 'Activate License';
+    }
+  }
+  
+  // Show error message
+  function showError(message) {
+    const errorMsg = document.getElementById('error-message');
+    errorMsg.textContent = message;
+    errorMsg.style.display = 'block';
+  }
+  
+  // Show success message
+  function showSuccess(message) {
+    const successMsg = document.getElementById('success-message');
+    successMsg.textContent = message;
+    successMsg.style.display = 'block';
+  }
+  
+  // Check license activation status
+  async function checkLicenseStatus() {
+    try {
+      const response = await fetch('https://shopift-theme-lisence-app.vercel.app/api/license/check?domain={{ shop.permanent_domain }}');
+      const data = await response.json();
+      
+      if (data.success && data.activated) {
+        // License is activated, hide the overlay
+        const overlay = document.getElementById('theme-license-notice');
+        if (overlay) {
+          overlay.style.display = 'none';
+        }
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('License check failed:', error);
+      return false;
+    }
+  }
+
+  // Check license status when page loads
+  document.addEventListener('DOMContentLoaded', function() {
+    checkLicenseStatus();
+  });
+  
   // Prevent right-click and common shortcuts when license is not activated
   document.addEventListener('contextmenu', function(e) {
     e.preventDefault();
@@ -173,11 +324,10 @@
   setInterval(function() {
     checkLicenseStatus().then(activated => {
       if (activated) {
-        // License is now activated, can optionally reload or just hide overlay
         console.log('License activated successfully!');
       }
     });
-  }, 10000); // Check every 10 seconds
+  }, 30000); // Check every 30 seconds
 </script>
 {% endunless %}
 

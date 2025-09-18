@@ -29,58 +29,46 @@ export async function action({ request }) {
       });
     }
 
-    // Check if license exists
-    const license = await prisma.license.findUnique({
+    // Check if license key already exists in the system
+    const existingLicense = await prisma.license.findUnique({
       where: { licenseKey }
     });
 
-    if (!license) {
+    if (existingLicense) {
       return json({
         success: false,
-        error: "Invalid license key"
+        error: "This license key already exists. Please enter a unique license key."
       });
     }
 
-    // Check if license is already activated for a different domain
+    // Check if license key already exists in activations
     const existingActivation = await prisma.licenseActivation.findFirst({
-      where: {
-        licenseKey,
-        isActive: true
-      }
+      where: { licenseKey }
     });
 
-    if (existingActivation && existingActivation.domain !== domain) {
+    if (existingActivation) {
       return json({
         success: false,
-        error: `License is already activated for domain: ${existingActivation.domain}`
+        error: "This license key already exists. Please enter a unique license key."
       });
     }
 
-    // Create or update activation
-    const activation = await prisma.licenseActivation.upsert({
-      where: {
-        licenseKey_domain: {
-          licenseKey,
-          domain
-        }
-      },
-      update: {
-        isActive: true
-      },
-      create: {
-        licenseKey,
-        domain,
-        isActive: true
-      }
-    });
-
-    // Update license record
-    await prisma.license.update({
-      where: { licenseKey },
+    // Create new license record
+    const license = await prisma.license.create({
       data: {
+        licenseKey,
         domain,
         isActive: true,
         activatedAt: new Date()
+      }
+    });
+
+    // Create new activation record
+    const activation = await prisma.licenseActivation.create({
+      data: {
+        licenseKey,
+        domain,
+        isActive: true
       }
     });
 

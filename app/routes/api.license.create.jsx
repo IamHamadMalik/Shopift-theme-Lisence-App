@@ -1,3 +1,5 @@
+// COMMENTED OUT: License generation is now handled by client using BIG Digital Downloads app
+/*
 import { json } from "@remix-run/node";
 import prisma from "../db.server";
 import { authenticate } from "../shopify.server";
@@ -56,4 +58,10 @@ export async function action({ request }) {
       { status: 500 }
     );
   }
+}
+*/
+
+// This endpoint is no longer used - license creation is handled externally
+export async function action({ request }) {
+  return new Response("License generation is handled externally", { status: 410 });
 }

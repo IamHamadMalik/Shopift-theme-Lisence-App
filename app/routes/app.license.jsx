@@ -55,6 +55,8 @@ export default function LicensePage() {
   const [activationResult, setActivationResult] = useState(null);
   const [isActivating, setIsActivating] = useState(false);
 
+  // COMMENTED OUT: These functions are no longer used since activation/generation is handled in theme
+  /*
   const handleActivation = async () => {
     if (!licenseKey || !domain) {
       setActivationResult({
@@ -118,6 +120,7 @@ export default function LicensePage() {
       console.error("Error generating licenses:", error);
     }
   };
+  */
 
   const handleRevokeLicense = async (licenseKey, domain) => {
     if (!confirm(`Are you sure you want to revoke license ${licenseKey} for domain ${domain}?`)) {
@@ -325,10 +328,23 @@ export default function LicensePage() {
   ]);
 
   return (
-    <Page title="Theme License Management">
+    <Page title="License Monitoring Dashboard">
       <BlockStack gap="500">
         
+        {/* Info Banner */}
+        <Banner status="info">
+          <p>
+            <strong>License Management:</strong> Customers activate licenses directly in their themes. 
+            This dashboard shows all activated licenses and allows you to manage them.
+          </p>
+        </Banner>
+        
+        {/* 
+        COMMENTED OUT: License activation and generation functionality
+        This is now handled directly in the theme overlay by customers
+        
         {/* License Activation Section */}
+        {/*
         <Card>
           <BlockStack gap="400">
             <Text variant="headingMd">Activate License</Text>
@@ -387,6 +403,7 @@ export default function LicensePage() {
         <Divider />
 
         {/* Generate Licenses Section */}
+        {/*
         <Card>
           <BlockStack gap="400">
             <Text variant="headingMd">Generate New Licenses</Text>
@@ -416,6 +433,7 @@ export default function LicensePage() {
         </Card>
 
         <Divider />
+        */}
 
         {/* All Licenses Table */}
         <Card>
